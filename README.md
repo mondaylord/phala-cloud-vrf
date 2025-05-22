@@ -11,7 +11,7 @@ This implementation combines on-chain smart contracts with off-chain TEE computa
 
 The system comprises:
 1. On-chain VRF Coordinator Contract
-2. Off-chain TEE Service (Confidential VM)
+2. Off-chain VRF Generator (Confidential VM)
 3. Client-facing API endpoints
 
 ## VRF Workflow
@@ -19,59 +19,59 @@ The system comprises:
 ### 1. Initial Setup
 ```mermaid
 sequenceDiagram
-    participant Contract
     participant ContractOwner
-    participant TEE
+    participant Contract
+    participant Offchain-VRF
   
-    TEE->>TEE: Generate wallet keypair (tee_sk, tee_address)
-    ContractOwner->>Contract: Manual registration via setTrustedThirdParty(tee_address)
-    ContractOwner->>TEE: GET /address
-    TEE->>ContractOwner: Return tee_address
-    ContractOwner->>Contract: setTrustedThirdParty(tee_address)
-    ContractOwner->>TEE: GET /pubkey
-    TEE->>ContractOwner: Return offline_pubkey
-    ContractOwner->>Contract: updateOfflinePublicKey(offline_pubkey)
+    Offchain-VRF->>Offchain-VRF: Randomly generates wallet keypair (wallet_sk, wallet_address)
+    Offchain-VRF->>Offchain-VRF: TEE generates signing keypair (signing_sk, signing_pubkey)
+    ContractOwner->>Offchain-VRF: GET /address
+    Offchain-VRF->>ContractOwner: Return wallet_address
+    ContractOwner->>Contract: setTrustedThirdParty(wallet_address)
+    ContractOwner->>Offchain-VRF: GET /pubkey
+    Offchain-VRF->>ContractOwner: Return signing_pubkey
+    ContractOwner->>Contract: updateOfflinePublicKey(signing_pubkey)
 ```
 
-- **TEE Identity Establishment**
-  TEE generates `tee_sk` (private key) and derives `tee_address`. Contract owner registers this address as trusted via `setTrustedThirdParty()`. And further transactions are sent from this address.
+- **Trusted Wallet Identity Establishment**
+  Offchain-VRF generates `wallet_sk` (private key) and derives `wallet_address`. Contract owner registers this address as trusted via `setTrustedThirdParty()`. And further transactions are sent from this wallet address.
 
-- **Offline Key Distribution**
-  TEE generates separate `offline_sk` for VRF operations. Contract owner retrieves the corresponding public key via `/pubkey` endpoint and register it on-chain
+- **OffChain Key Distribution by TEE**
+  TEE generates separate `signing_sk` for VRF operations. Contract owner retrieves the corresponding public key via `/pubkey` endpoint and register it on-chain
 
 ### 2. Randomness Request Flow
 ```mermaid
 sequenceDiagram
     participant User
     participant Contract
-    participant TEE
+    participant Offchain-VRF
   
     User->>Contract: requestRandomNumber(seed)
     Contract->>Contract: Store request in queue
-    Contract-->>TEE: Emit RequestQueued(requestId, seed)
-    TEE->>TEE: Listen for RequestQueued events
-    TEE->>TEE: Compute random = VRF(offline_sk, seed)
-    TEE->>TEE: Sign(requestId + seed + random)
-    TEE->>Contract: onRandomGenerated(requestId, random, signature)
-    Contract->>Contract: Verify signature matches offline_pubkey
-    Contract-->>User: Emit RandomFulfilled(requestId)
+    Contract-->>Offchain-VRF: Emit RequestQueued(requestId, seed)
+    Offchain-VRF->>Offchain-VRF: Listen for RequestQueued events
+    Offchain-VRF->>Offchain-VRF: Compute random = VRF(signing_sk, seed)
+    Offchain-VRF->>Offchain-VRF: Sign(requestId + seed + random)
+    Offchain-VRF->>Contract: onRandomGenerated(requestId, random, signature)
+    Contract->>Contract: Verify signature matches signing_pubkey
+    Contract-->>Contract: Emit RandomFulfilled(requestId)
 ```
 
 - **Request Initiation**
   Users submit randomness requests with unique seeds via `requestRandomNumber(seed)`
 
 - **TEE Computation**
-  TEE monitors events and processes queued requests using:
+  Offchain-VRF monitors events and processes queued requests using:
   ```ts
-  random = SHA256(offline_sk + seed)
-  signature = ethers.Wallet.signMessage(offline_sk, solidityPackedKeccak256(requestId, seed, random))
+  random = SHA256(signing_sk + seed)
+  signature = ethers.Wallet.signMessage(signing_sk, solidityPackedKeccak256(requestId, seed, random))
   ```
 
 - **On-chain Verification**
   Contract verifies using ECDSA recovery:
   ```solidity
   address recovered = ecrecover(hash, v, r, s);
-  require(recovered == offline_pubkey, "Invalid proof");
+  require(recovered == signing_pubkey, "Invalid signature");
   ```
 
 ## Key Features
@@ -130,3 +130,12 @@ cd meta-dstack/dstack/sdk/simulator
 ```bash
 docker-compose up
 ```
+
+## Demo Contract:
+
+You can use the demo contract to test the VRF workflow. The contract is deployed on [Sepolia testnet](https://sepolia.etherscan.io/address/0xafe5adfe149a99ac8c5b5e37a9ab53dc9193313e).
+
+You can check the transactions and events on the testnet. The speed of the transactions is fast, it only costs 1 block to generate the random number. If you want to test the VRF workflow, you can use the `request.ts` in the scrips folder to test the VRF workflow.
+
+First, you should run the dstack simulator, then run docker-compose up to start the service.
+Then you can run the `request.ts` to test the VRF workflow.
