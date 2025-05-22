@@ -1,0 +1,12 @@
+services:
+  app:
+    image: mondaylord/vrf-offchain:latest
+    container_name: tee-app
+    restart: unless-stopped
+    volumes:
+      - /var/run/dstack.sock:/var/run/dstack.sock
+    ports:
+      - "3000:3000" 
+    environment:
+      - RPC_URL=${RPC_URL}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
