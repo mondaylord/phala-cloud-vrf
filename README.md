@@ -1,5 +1,3 @@
-Here's an enhanced README with VRF workflow explanation and technical refinements:
-
 # Phala Cloud VRF 
 
 A Verifiable Random Function (VRF) implementation leveraging Trusted Execution Environment (TEE) technology on [Phala Cloud](https://cloud.phala.network/) and [DStack](https://github.com/dstack-TEE/dstack/). Provides cryptographically verifiable randomness for blockchain applications with enhanced security guarantees through hardware isolation.
