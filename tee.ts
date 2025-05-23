@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { createPublicClient, http, Log } from 'viem';
 import { readFileSync } from 'fs'
-import { DstackClient, to_hex } from '@phala/dstack-sdk';
+import { TappdClient } from '@phala/dstack-sdk';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import express from 'express';
@@ -43,38 +43,6 @@ const vrfCoordinator = new ethers.Contract(
     VRFCoordinatorABI,
     teeWallet
 );
-// Uncomment the following lines if you need to set trustedTEE in TEE
-/*
-const CONTRACT_OWNER_PRIVATE_KEY = process.env.CONTRACT_OWNER_PRIVATE_KEY; // Contract owner private key (confidential) This key should be set through environment variables
-const contractOwnerWallet = new ethers.Wallet(CONTRACT_OWNER_PRIVATE_KEY!, provider);
-const contractOperator = new ethers.Contract(
-    CONTRACT_ADDRESS!,
-    VRFCoordinatorABI,
-    contractOwnerWallet
-);
-// --------------------- Set trustedTEE ---------------------
-export async function setTrustedTEE() {
-    const address = teeWallet.address;
-
-    const gasEstimate = await contractOperator.setTrustedThirdParty.estimateGas(address);
-    console.log(`Estimated Gas consumption: ${gasEstimate.toString()}`);
-
-    // Execute actual transaction
-    const txResponse = await contractOperator.setTrustedThirdParty(address, {
-        gasLimit: gasEstimate * 12n / 10n // BigInt calculation
-    });
-
-    console.log(`setTrustedThirdParty Transaction sent, hash: ${txResponse.hash}`);
-    const receipt = await sendTransactionWithRetry(txResponse);
-    console.log(`setTrustedThirdParty Transaction confirmed in block ${receipt?.blockNumber}`);
-}
-(async () => {
-    await setTrustedTEE();
-})().catch(error => {
-    console.error('Error setting trustedTEE:', error);
-    process.exit(1);
-});
-*/
 
 let rootKey: string;
 
@@ -190,10 +158,10 @@ async function processRequest(requestId: bigint, seed: bigint): Promise<void> {
 
 // --------------------- Init Keys ---------------------
 async function initKeys(): Promise<string> {
-    const client = new DstackClient();
+    const client = new TappdClient();
     await client.info();
-    const testDeriveKey = await client.getKey("ethereum");
-    const key = to_hex(testDeriveKey.key);
+    const testDeriveKey = await client.deriveKey("ethereum");
+    const key = testDeriveKey.key;
     return key.startsWith('0x') ? key : `0x${key}`;
 }
 

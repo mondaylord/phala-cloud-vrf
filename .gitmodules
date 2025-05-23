@@ -1,3 +1,0 @@
-[submodule "meta-dstack"]
-	path = meta-dstack
-	url = https://github.com/Dstack-TEE/meta-dstack.git

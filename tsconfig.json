@@ -9,8 +9,5 @@
         "outDir": "dist",
         "allowImportingTsExtensions": true,
         "noEmit": true,
-        "paths": {
-            "@phala/dstack-sdk": ["./meta-dstack/dstack/sdk/js/src/index.ts"]
-        }
     }
 }
