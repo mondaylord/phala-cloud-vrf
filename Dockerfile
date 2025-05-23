@@ -1,7 +1,6 @@
 FROM node:18-alpine
 WORKDIR /app
 
-COPY meta-dstack/ ./meta-dstack
 COPY ./artifacts ./artifacts/
 COPY tsconfig.json .
 COPY package.json .
