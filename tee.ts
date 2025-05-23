@@ -1,10 +1,11 @@
 import { ethers } from "ethers";
 import { createPublicClient, http, Log } from 'viem';
 import { readFileSync } from 'fs'
-import { TappdClient } from '@phala/dstack-sdk';
+import { TappdClient, to_hex } from '@phala/dstack-sdk';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import express from 'express';
+import { privateKeyToAccount } from "viem/accounts";
 dotenv.config();
 
 export const dynamic = 'force-dynamic'
@@ -76,7 +77,7 @@ app.get('/get_wallet', async (req, res) => {
         const address = teeWallet.address;
         res.json({ Ethereum_wallet_address: address });
     } catch (error) {
-        res.status(500).json({ error: 'Key not initialized' });
+        res.status(500).json({ error: (error as Error).message  });
     }
 });
 
@@ -85,7 +86,7 @@ app.get('/pubkey', async (req, res) => {
         const pubKey = getPubKey();
         res.json({ address: pubKey });
     } catch (error) {
-        res.status(500).json({ error: 'Key not initialized' });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -161,7 +162,7 @@ async function initKeys(): Promise<string> {
     const client = new TappdClient();
     await client.info();
     const testDeriveKey = await client.deriveKey("ethereum");
-    const key = testDeriveKey.key;
+    const key = Array.from(testDeriveKey.asUint8Array(32)).map(b => b.toString(16).padStart(2, '0')).join('')
     return key.startsWith('0x') ? key : `0x${key}`;
 }
 
@@ -183,7 +184,7 @@ function updateSecretKey(): void {
 
 // --------------------- Get Public Key Address ---------------------
 function getPubKey(): string {
-    const pubkey = new ethers.Wallet(rootKey).address;
+    const pubkey = privateKeyToAccount(rootKey as `0x${string}`).address;
     return pubkey;
 }
 

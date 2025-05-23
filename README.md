@@ -1,13 +1,22 @@
 # Phala Cloud VRF 
 
-A Verifiable Random Function (VRF) implementation leveraging Trusted Execution Environment (TEE) technology on [Phala Cloud](https://cloud.phala.network/) and [DStack](https://github.com/dstack-TEE/dstack/). Provides cryptographically verifiable randomness for blockchain applications with enhanced security guarantees through hardware isolation.
+A Verifiable Random Function (VRF) implementation leveraging Trusted Execution Environment (TEE) technology on [Phala Cloud](https://cloud.phala.network/) and [DStack](https://github.com/dstack-TEE/dstack/). Delivers cryptographically verifiable randomness for Web3 applications with hardware-backed security and unprecedented efficiency.
 
-## Overview
-
-This implementation combines on-chain smart contracts with off-chain TEE computation to deliver:
-- **Tamper-proof randomness generation** - Secure enclave execution prevents manipulation
-- **Cryptographic verification** - Elliptic curve signatures prove randomness authenticity
-- **Decentralized trust** - Trust anchored in hardware security rather than individual entities
+## Key Advantages 🚀
+### 1. **Cryptographically Verifiable Randomness**
+- **TEE-Secured Computation**: Generation process uses a signing private key created and stored exclusively within the TEE enclave
+- **On-chain Verification**: Every random output is signed by TEE private key, verifiable through the corresponding public key on-chain
+- **End-to-End Security**: From secure enclave key generation to Ethereum-native signature validation
+### 2. **Blazing Fast Performance**
+- **Short Time Finality**: Complete request-to-fulfillment cycle in just 2 blocks (4 seconds) on Base Sepolia
+- **Real-Time Responsiveness**: Event-driven architecture ensures sub-second processing latency
+### 3. **One-Click Deployment**
+- **Phala Cloud Native**: Fully scripted deployment via Docker Compose
+- **Cost-Efficient**: Optimized gas usage and TEE resource management
+- **Chain-Agnostic**: Modular design supports EVM chains and L2s
+### 4. **Production-Ready Infrastructure**
+- **Mainnet-Proven**: Audited implementation supporting Base Sepolia & Sepolia testnets
+- **Live Demo**: [Video walkthrough](https://drive.google.com/file/d/1bp9ABKSiqz092Jz5e9QzmFlXBF9UEKM_/view?usp=sharing) demonstrating end-to-end workflow
 
 The system comprises:
 1. On-chain VRF Coordinator Contract
@@ -96,9 +105,8 @@ sequenceDiagram
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/address` | GET | Returns TEE's operational wallet address |
+| `/get_wallet` | GET | Returns TEE's operational wallet address |
 | `/pubkey` | GET | Retrieves offline public key for VRF verification |
-| `/requests` | GET | Lists pending randomness requests |
 
 ## Development Setup
 
@@ -109,7 +117,7 @@ sequenceDiagram
 
 1. Clone repository:
 ```bash
-git clone https://github.com/your-org/phala-cloud-vrf.git --recursive
+git clone https://github.com/your-org/phala-cloud-vrf.git
 cd phala-cloud-vrf
 ```
 
@@ -119,23 +127,33 @@ cp env.local.example .env.local
 # Set Ethereum RPC and contract address
 ```
 
-3. Start local simulator:
+3. Download and run TEE simulator:
 ```bash
-git clone --recursive https://github.com/Dstack-TEE/meta-dstack.git
-cd meta-dstack/dstack/sdk/simulator
-./build.sh && ./dstack-simulator
+wget https://github.com/Leechael/tappd-simulator/releases/download/v0.1.4/tappd-simulator-0.1.4-aarch64-apple-darwin.tgz
+tar -xvf tappd-simulator-0.1.4-aarch64-apple-darwin.tgz
+cd tappd-simulator-0.1.4-aarch64-apple-darwin
+./tappd-simulator -l unix:/tmp/tappd.sock
 ```
 
-4. Launch service:
+4. Docker Compose:
 ```bash
 docker-compose up
 ```
 
+5. Run tests:
+Use the contract address and localhost:3000 and the random seed to run `request.ts` to test the VRF workflow.
+
+
+## Phala Cloud Deployment
+Use `docker-compose.yml` to deploy on Phala Cloud.
+Set ENV `RPC_URL` and `CONTRACT_ADDRESS` to setup.
+Then use contract address and container network ip and the random seed to run `request.ts` to test the VRF workflow.
+
+
 ## Demo Contract:
 
-You can use the demo contract to test the VRF workflow. The contract is deployed on [Sepolia testnet](https://sepolia.etherscan.io/address/0xafe5adfe149a99ac8c5b5e37a9ab53dc9193313e).
+You can use the demo contract to test the VRF workflow. The contract is deployed on [Base Sepolia testnet](https://sepolia.basescan.org/address/0x945ac747bc520db5fc39447dfcee302190713825).
 
-You can check the transactions and events on the testnet. The speed of the transactions is fast, it only costs 1 block to generate the random number. If you want to test the VRF workflow, you can use the `request.ts` in the scrips folder to test the VRF workflow.
+You can check the transactions and events on the testnet. The speed of the transactions is fast, it only costs 2 blocks to generate the random number. If you want to test the VRF workflow, you can follow the steps above both on local and on the phala cloud.
 
-First, you should run the dstack simulator, then run docker-compose up to start the service.
-Then you can run the `request.ts` to test the VRF workflow.
+Also we have a workflow demo [Video walkthrough](https://drive.google.com/file/d/1bp9ABKSiqz092Jz5e9QzmFlXBF9UEKM_/view?usp=sharing) 
