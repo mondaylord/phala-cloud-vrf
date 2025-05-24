@@ -9,9 +9,8 @@ dotenv.config();
 const execAsync = promisify(exec);
 
 // Configuration
-const PRIVATE_KEY = '0x195833389d04eb184ea718ed730a388867df80334726bb3660a18fb4bec58445';
-const ALCHEMY_API_KEY = 't3fg4WHJUsUGatPdR0V0_';
-const RPC_URL = `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_API_KEY}`;
+const PRIVATE_KEY = process.argv[5]
+const RPC_URL = process.argv[6]
 
 // Initialize wallet client
 const account = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
@@ -165,8 +164,8 @@ async function main(baseUrl: string, contractAddress: string, seed: number) {
 }
 
 // Parse command line arguments
-// Usage: npx ts-node scripts/request.ts [baseUrl] [contractAddress] [seed]
-// Example: npx ts-node scripts/request.ts https://example-api.phala.network 0xc0A0d84fBB3D9fc240c4aD482135810Bda7F375A 30
+// Usage: npx ts-node scripts/request.ts [baseUrl] [contractAddress] [seed] [private_key] [rpc_url]
+// Example: npx ts-node scripts/request.ts https://example-api.phala.network 0xc0A0d84fBB3D9fc240c4aD482135810Bda7F375A 30 private_key rpc_url
 const baseUrl = process.argv[2];
 const contractAddress = process.argv[3];
 const seed = process.argv[4];
